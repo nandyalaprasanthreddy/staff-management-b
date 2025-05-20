@@ -41,9 +41,13 @@ export const createShiftSrvc = async (
   }
 };
 
+interface Sample {
+  label: string;
+  value: string;
+}
 export const getShiftCreationDetails = async (): Promise<{
-  shifts: ShiftType[];
-  staff: UsersType[];
+  shifts: Sample[];
+  staff: Sample[];
 }> => {
   try {
     const [shiftData, staffData] = await Promise.all([
@@ -51,9 +55,19 @@ export const getShiftCreationDetails = async (): Promise<{
       users.find({ role: "staff" }).select("userName").lean(),
     ]);
 
+    const transformed = await staffData.map(({ _id, userName }) => ({
+      value: _id.toString(),
+      label: userName,
+    }));
+
+    const transformed2 = shiftData.map(({ shiftTime, shiftName }) => ({
+      value: shiftTime.shiftCode,
+      label: `${shiftName} (${shiftTime.time})`,
+    }));
+
     return {
-      shifts: shiftData,
-      staff: staffData,
+      shifts: transformed2,
+      staff: transformed,
     };
   } catch (error) {
     throw new apiError("Internal server error", 500, false);
